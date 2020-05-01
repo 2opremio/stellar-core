@@ -244,6 +244,35 @@ TEST_CASE("postgres smoketest", "[db]")
             app->getDatabase().getSession() << "drop table if exists test";
             checkMVCCIsolation(app);
         }
+
+        SECTION("postgres notify")
+        {
+            // INFO notification should log but not throw.
+            session << "do $$ "
+                       "begin "
+                       "raise info 'a test message'; "
+                       "end; "
+                       "$$;";
+
+            // NOTIFY notification should log but not throw
+            session << "drop table if exists non_existing_table;";
+
+            // WARNING notification should throw an soci::soci_error exception.
+            try
+            {
+                session << "begin; begin; "
+                           "SELECT 1; "
+                           "end; end;";
+
+                LOG(ERROR) << "DB error: "
+                              "expected warning notification to throw";
+                REQUIRE(0);
+            }
+            catch (const soci::soci_error& err)
+            {
+                LOG(INFO) << err.what();
+            }
+        }
     }
     catch (soci::soci_error& err)
     {
