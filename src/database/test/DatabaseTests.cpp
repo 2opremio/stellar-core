@@ -260,9 +260,11 @@ TEST_CASE("postgres smoketest", "[db]")
             // WARNING notification should throw an soci::soci_error exception.
             try
             {
+                int result;
                 session << "begin; begin; "
-                           "SELECT 1; "
-                           "end; end;";
+                           "select 1; "
+                           "end; end;",
+                           soci::into(result);
 
                 LOG(ERROR) << "DB error: "
                               "expected warning notification to throw";
